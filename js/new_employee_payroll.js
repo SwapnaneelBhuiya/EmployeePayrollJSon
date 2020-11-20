@@ -109,7 +109,7 @@ function save() {
         return;
     }
 }
-const createPayroll=(){
+const createPayroll=()=>{
     let employeePayrollData=new EmployeePayrollData();
     try{
         employeePayrollData.name=document.querySelector('#name');
