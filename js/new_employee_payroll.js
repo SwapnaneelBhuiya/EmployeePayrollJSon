@@ -1,18 +1,25 @@
 class EmployeePayrollData {
 
-    constructor(...params) {
-        this.name = params[0];
-        this.salary = params[1];
-        this.gender = params[2];
-        this.startDate = params[3];
-        this.department = params[4];
+    // constructor(...params) {
+    //     this.name = params[0];
+    //     this.salary = params[1];
+    //     this.gender = params[2];
+    //     this.startDate = params[3];
+    //     this.department = params[4];
+    // }
+    get id(){return this._id;}
+    set id(id){
+        this._id=id;
     }
-
+    get profilePic(){return this._profilrPic;}
+    set profilePic(profilePic){
+        this._profilePic=profilePic;
+    }
     get name() {
         return this._name;
     }
     set name(name) {
-        let nameRegex = RegExp('^[A-Z]{1}[a-z]{2,}$');
+        let nameRegex = RegExp('^[A-Z]{1}[a-zA-Z]{2,}$');
         //let nameRegex = RegExp('[a-zA-z]+\s[a-zA-z]+\s[a-zA-z]+');
         if (nameRegex.test(name))
             this._name = name;
@@ -32,6 +39,12 @@ class EmployeePayrollData {
         if (salaryRegex.test(salary))
             this._salary = salary;
         else throw "Salary should be non zero positive number";
+    }
+    get note(){
+        return this._notes;
+    }
+    set note(notes){
+        this._note=notes;
     }
     get gender() {
         return this._gender;
@@ -60,15 +73,10 @@ class EmployeePayrollData {
         }
     }
     toString() {
-        return " Name: " + this.name + " Salary: " + this.salary + " Gender: " + this.gender + " Start Date: " + this.startDate + " Department: " + this.department;
+        return "Id: "+ this.id+ " Name: " + this.name + " Salary: " + this.salary +"Profile pic: "+this.profilePic  + " Gender: " + this.gender + " Start Date: " + this.startDate + " Department: " + this.department;
     }
 }
 
-const salary = document.querySelector('#salary');
-const output = document.querySelector('.salary-output');
-salary.addEventListener('input', function () {
-    output.textContent = salary.value;
-});
 
 const day = document.querySelector('#day');
 const year = document.querySelector('#year');
@@ -92,26 +100,43 @@ const dateError = document.querySelector('.date-error');
         } else dateError.textContent = "";
     }
 }));
-
 function save() {
+    try{
+        let employeePayrollData=createPayroll();
+        createAndUpdateStorage(employeePayrollData);
+    }
+    catch(e){
+        return;
+    }
+}
+const createPayroll=(){
+    let employeePayrollData=new EmployeePayrollData();
+    try{
+        employeePayrollData.name=document.querySelector('#name');
+    }
+    catch(e){
+        setTextValue('.text-error',e);
+    }
     try {
-        var name = document.querySelector('#name').value;
-        var salary = document.querySelector('#salary').value;
-        var gender = document.querySelector('input[name=gender]:checked').value;
-        var year = document.querySelector('#year').value;
-        var month = document.querySelector('#month').value;
-        var day = document.querySelector('#day').value;
-        var startDate = new Date(year, month, day);
-        var department = [];
-        var deptCheckboxes = document.querySelectorAll('input[name=department]:checked');
-        for (var i = 0; i < deptCheckboxes.length; i++) {
-            department.push(deptCheckboxes[i].value);
-        }
-        var employee = new EmployeePayrollData(name, salary, gender, startDate, department);
-        alert(employee);
+        employeePayrollData.profilePic=getSelectedValues('[name=profile]').pop();
+        employeePayrollData.salary = document.querySelector('#salary').value;
+        employeePayrollData.gender = getSelectedValues('[name=gender]').pop();
+        employeePayrollData.note=document.querySelector('#note');
+        employeePayrollData.department=getSelectedValues('[name=department]');
+        let date=document.querySelector('#day')+" "+document.querySelector('#month')+" "+document.querySelector('#year');
+        employeePayrollData.startDate=Date.parse(date);
+        alert(employeePayrollData.toString);
     } catch (error) {
         alert(error);
     }
+}
+const getSelectedValues=(propertyValue)=>{
+    let allItems=document.querySelectorAll(propertyValue);
+    let selItems=[];
+    allItems.forEach(item=>{
+        if(item.checked) selItems.push(item.value);
+    });
+    return selItems;
 }
 
 const isLeapYear = (year) => {
@@ -127,3 +152,56 @@ const isLeapYear = (year) => {
     }
     return result;
 } 
+window.addEventListener('DOMContentLoaded',(event)=>{
+    const name=document.querySelector('#name');
+    const textError=document.querySelector('.text-error');
+    name.addEventListener('input',function(){
+        if(name.value.length==0){
+            textError.textContent="";
+            return;
+        }
+        try{
+            (new EmployeePayrollData()).name=name.value;
+            textError.textContent="";
+        }
+        catch(e){textError.textContent=e;}
+    });
+    const salary = document.querySelector('#salary');
+    const output = document.querySelector('.salary-output');
+    salary.addEventListener('input', function () {
+    output.textContent = salary.value;
+    });
+});
+function createAndUpdateStorage(employeePayrollData){
+    let employeePayrollList= JSON.parse(localStorage.getItem("EmployeePayrollList"));
+    if(employeePayrollList!=undefined){
+        employeePayrollList.push(employeePayrollData);
+    }
+    else{
+    employeePayrollList=[employeePayrollData];
+    }
+    alert(employeePayrollList.toString());
+    localStorage.setItem("EmployeePayrollList",JSON.stringify(employeePayrollList));
+
+}
+
+const reset= () => {
+    setValue('#name','');
+    unsetSelectedValues('[name=gender]');
+    unsetSelectedValues('[name=department');
+    unsetSelectedValues('[name=profile]');
+    setValue('#salary','');
+    setValue('#notes','');
+    setValue('#day','1');
+    setValue('#month','0');
+    setValue('#year','2020');
+
+}
+const unsetSelectedValues=(propertyValue)=>{
+    let allItems= document.querySelectorAll(propertyValue);
+    allItems.forEach(item=>{item.checked=false});
+}
+const setValue=(id,value)=>{
+    const element=document.querySelector(id);
+    element.value=value;
+}
